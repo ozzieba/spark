@@ -50,7 +50,7 @@ private[streaming] abstract class RateController(val streamUID: Int, rateEstimat
   private def init() {
     executionContext = ExecutionContext.fromExecutorService(
       ThreadUtils.newDaemonSingleThreadExecutor("stream-rate-update"))
-    rateLimit = new AtomicLong(-1L)
+    rateLimit = new AtomicLong(3000L)
   }
 
   private def readObject(ois: ObjectInputStream): Unit = Utils.tryOrIOException {

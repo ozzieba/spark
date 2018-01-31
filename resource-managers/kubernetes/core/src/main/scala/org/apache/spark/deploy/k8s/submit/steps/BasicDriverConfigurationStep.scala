@@ -90,7 +90,7 @@ private[spark] class BasicDriverConfigurationStep(
     val nodeSelector =
       KubernetesUtils.parsePrefixedKeyValuePairs(
         sparkConf,
-        KUBERNETES_NODE_SELECTOR_PREFIX) +
+        KUBERNETES_NODE_SELECTOR_PREFIX) ++
       KubernetesUtils.parsePrefixedKeyValuePairs(
         sparkConf,
         KUBERNETES_DRIVER_NODE_SELECTOR_PREFIX)

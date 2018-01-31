@@ -70,7 +70,10 @@ private[spark] class ExecutorPodFactory(
   private val nodeSelector =
     KubernetesUtils.parsePrefixedKeyValuePairs(
       sparkConf,
-      KUBERNETES_NODE_SELECTOR_PREFIX)
+      KUBERNETES_NODE_SELECTOR_PREFIX) +
+    KubernetesUtils.parsePrefixedKeyValuePairs(
+      sparkConf,
+      KUBERNETES_EXECUTOR_NODE_SELECTOR_PREFIX)
 
   private val executorContainerImage = sparkConf
     .get(EXECUTOR_CONTAINER_IMAGE)

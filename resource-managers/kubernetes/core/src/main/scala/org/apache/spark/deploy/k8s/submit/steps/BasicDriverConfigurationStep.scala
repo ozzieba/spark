@@ -87,8 +87,13 @@ private[spark] class BasicDriverConfigurationStep(
 
     val driverAnnotations = driverCustomAnnotations ++ Map(SPARK_APP_NAME_ANNOTATION -> appName)
 
-    val nodeSelector = KubernetesUtils.parsePrefixedKeyValuePairs(
-      sparkConf, KUBERNETES_NODE_SELECTOR_PREFIX)
+    val nodeSelector =
+      KubernetesUtils.parsePrefixedKeyValuePairs(
+        sparkConf,
+        KUBERNETES_NODE_SELECTOR_PREFIX) +
+      KubernetesUtils.parsePrefixedKeyValuePairs(
+        sparkConf,
+        KUBERNETES_DRIVER_NODE_SELECTOR_PREFIX)
 
     val driverCpuQuantity = new QuantityBuilder(false)
       .withAmount(driverCpuCores)

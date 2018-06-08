@@ -235,20 +235,6 @@ private[spark] object Config extends Logging {
       .stringConf
       .createOptional
 
-  private[spark] val KUBERNETES_ALLOCATION_BATCH_SIZE =
-    ConfigBuilder("spark.kubernetes.allocation.batch.size")
-      .doc("Number of pods to launch at once in each round of dynamic allocation. ")
-      .intConf
-      .createWithDefault(5)
-
-  private[spark] val KUBERNETES_ALLOCATION_BATCH_DELAY =
-    ConfigBuilder("spark.kubernetes.allocation.batch.delay")
-      .doc("Number of seconds to wait between each round of executor allocation. ")
-      .longConf
-      .createWithDefault(1)
-
-
-
   val KUBERNETES_AUTH_SUBMISSION_CONF_PREFIX =
     "spark.kubernetes.authenticate.submission"
 

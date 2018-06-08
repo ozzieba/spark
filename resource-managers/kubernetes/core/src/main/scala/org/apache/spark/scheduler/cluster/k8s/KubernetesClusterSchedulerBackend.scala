@@ -41,6 +41,7 @@ private[spark] class KubernetesClusterSchedulerBackend(
     scheduler: TaskSchedulerImpl,
     rpcEnv: RpcEnv,
     executorPodFactory: ExecutorPodFactory,
+    shuffleManager: Option[KubernetesExternalShuffleManager],
     kubernetesClient: KubernetesClient,
     allocatorExecutor: ScheduledExecutorService,
     requestExecutorsService: ExecutorService)
@@ -218,6 +219,7 @@ private[spark] class KubernetesClusterSchedulerBackend(
 
     allocatorExecutor.scheduleWithFixedDelay(
       allocatorRunnable, 0L, podAllocationInterval, TimeUnit.MILLISECONDS)
+    shuffleManager.foreach(_.start(applicationId()))
 
     if (!Utils.isDynamicAllocationEnabled(conf)) {
       doRequestTotalExecutors(initialExecutors)
@@ -228,6 +230,7 @@ private[spark] class KubernetesClusterSchedulerBackend(
     // stop allocation of new resources and caches.
     allocatorExecutor.shutdown()
     allocatorExecutor.awaitTermination(30, TimeUnit.SECONDS)
+    shuffleManager.foreach(_.stop())
 
     // send stop message to executors so they shut down cleanly
     super.stop()
@@ -433,6 +436,36 @@ private[spark] class KubernetesClusterSchedulerBackend(
           }
         }
       }
+    }
+    override def receiveAndReply(
+      context: RpcCallContext): PartialFunction[Any, Unit] = {
+      new PartialFunction[Any, Unit]() {
+        override def isDefinedAt(msg: Any): Boolean = {
+          msg match {
+            case RetrieveSparkAppConfig(_) =>
+              shuffleManager.isDefined
+            case _ => false
+          }
+        }
+
+        override def apply(msg: Any): Unit = {
+          msg match {
+            case RetrieveSparkAppConfig(executorId) if shuffleManager.isDefined =>
+              val runningExecutorPod = RUNNING_EXECUTOR_PODS_LOCK.synchronized {
+                kubernetesClient
+                  .pods()
+                  .withName(runningExecutorsToPods(executorId).getMetadata.getName)
+                  .get()
+              }
+              val shuffleSpecificProperties = shuffleManager.get
+                  .getShuffleServiceConfigurationForExecutor(runningExecutorPod)
+              val reply = SparkAppConfig(
+                  sparkProperties ++ shuffleSpecificProperties,
+                  SparkEnv.get.securityManager.getIOEncryptionKey())
+              context.reply(reply)
+          }
+        }
+      }.orElse(super.receiveAndReply(context))
     }
   }
 }

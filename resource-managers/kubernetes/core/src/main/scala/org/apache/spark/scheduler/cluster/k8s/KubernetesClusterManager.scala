@@ -107,11 +107,26 @@ private[spark] class KubernetesClusterManager extends ExternalClusterManager wit
       Some(new File(Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH)),
       Some(new File(Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH)))
 
+    val shuffleServiceEnabled = conf.getBoolean("spark.shuffle.service.enabled", false)
+    //originally checked spark.dynamicAllocation.enabled, but we want to enable shuffle with DV dynamic allocation
+    val kubernetesShuffleManager = if (shuffleServiceEnabled) {
+      val kubernetesExternalShuffleClient = new KubernetesExternalShuffleClientImpl(
+        SparkTransportConf.fromSparkConf(sparkConf, "shuffle"),
+        sc.env.securityManager,
+        sc.env.securityManager.isAuthenticationEnabled())
+      Some(new KubernetesExternalShuffleManagerImpl(
+        sparkConf,
+        kubernetesClient,
+        kubernetesExternalShuffleClient))
+    } else None
+
+
     val executorPodFactory = new ExecutorPodFactory(
       sparkConf,
       mountSecretBootstrap,
       initContainerBootstrap,
-      initContainerMountSecretsBootstrap)
+      initContainerMountSecretsBootstrap,
+      kubernetesShuffleManager)
 
     val allocatorExecutor = ThreadUtils
       .newDaemonSingleThreadScheduledExecutor("kubernetes-pod-allocator")
@@ -121,6 +136,7 @@ private[spark] class KubernetesClusterManager extends ExternalClusterManager wit
       scheduler.asInstanceOf[TaskSchedulerImpl],
       sc.env.rpcEnv,
       executorPodFactory,
+      kubernetesShuffleManager,
       kubernetesClient,
       allocatorExecutor,
       requestExecutorsService)

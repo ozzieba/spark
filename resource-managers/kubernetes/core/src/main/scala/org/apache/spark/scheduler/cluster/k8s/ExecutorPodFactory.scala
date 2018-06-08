@@ -45,7 +45,8 @@ private[spark] class ExecutorPodFactory(
     sparkConf: SparkConf,
     mountSecretsBootstrap: Option[MountSecretsBootstrap],
     initContainerBootstrap: Option[InitContainerBootstrap],
-    initContainerMountSecretsBootstrap: Option[MountSecretsBootstrap]) {
+    initContainerMountSecretsBootstrap: Option[MountSecretsBootstrap],
+    shuffleManager: Option[KubernetesExternalShuffleManager]) {
 
   private val executorExtraClasspath = sparkConf.get(EXECUTOR_CLASS_PATH)
 
@@ -172,7 +173,9 @@ private[spark] class ExecutorPodFactory(
           .withContainerPort(port)
           .build()
       }
-
+    val shuffleVolumesWithMounts =
+        shuffleManager.map(_.getExecutorShuffleDirVolumesWithMounts)
+            .getOrElse(Seq.empty)
     val executorContainer = new ContainerBuilder()
       .withName("executor")
       .withImage(executorContainerImage)
@@ -184,6 +187,7 @@ private[spark] class ExecutorPodFactory(
         .endResources()
       .addAllToEnv(executorEnv.asJava)
       .withPorts(requiredPorts.asJava)
+      .addAllToVolumeMounts(shuffleVolumesWithMounts.map(_._2).asJava)
       .addToArgs("executor")
       .build()
 
@@ -205,6 +209,7 @@ private[spark] class ExecutorPodFactory(
         .withHostname(hostname)
         .withRestartPolicy("Never")
         .withNodeSelector(nodeSelector.asJava)
+        .addAllToVolumes(shuffleVolumesWithMounts.map(_._1).asJava)
         .endSpec()
       .build()
 

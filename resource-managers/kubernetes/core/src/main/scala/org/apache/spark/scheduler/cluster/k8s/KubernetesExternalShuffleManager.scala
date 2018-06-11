@@ -26,7 +26,7 @@ import scala.collection.JavaConverters._
 
 import org.apache.spark.{SparkConf, SparkException}
 import org.apache.spark.deploy.k8s.ConfigurationUtils
-import org.apache.spark.deploy.k8s.config._
+import org.apache.spark.deploy.k8s.Config._
 import org.apache.spark.internal.Logging
 import org.apache.spark.network.shuffle.kubernetes.KubernetesExternalShuffleClient
 import org.apache.spark.util.Utils

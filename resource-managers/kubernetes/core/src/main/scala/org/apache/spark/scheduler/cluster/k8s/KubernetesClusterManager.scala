@@ -25,6 +25,8 @@ import org.apache.spark.deploy.k8s.{InitContainerBootstrap, KubernetesUtils, Mou
 import org.apache.spark.deploy.k8s.Config._
 import org.apache.spark.deploy.k8s.Constants._
 import org.apache.spark.internal.Logging
+import org.apache.spark.network.netty.SparkTransportConf
+import org.apache.spark.network.shuffle.kubernetes.KubernetesExternalShuffleClientImpl
 import org.apache.spark.scheduler.{ExternalClusterManager, SchedulerBackend, TaskScheduler, TaskSchedulerImpl}
 import org.apache.spark.util.ThreadUtils
 
@@ -107,7 +109,7 @@ private[spark] class KubernetesClusterManager extends ExternalClusterManager wit
       Some(new File(Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH)),
       Some(new File(Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH)))
 
-    val shuffleServiceEnabled = conf.getBoolean("spark.shuffle.service.enabled", false)
+    val shuffleServiceEnabled = sparkConf.getBoolean("spark.shuffle.service.enabled", false)
     //originally checked spark.dynamicAllocation.enabled, but we want to enable shuffle with DV dynamic allocation
     val kubernetesShuffleManager = if (shuffleServiceEnabled) {
       val kubernetesExternalShuffleClient = new KubernetesExternalShuffleClientImpl(

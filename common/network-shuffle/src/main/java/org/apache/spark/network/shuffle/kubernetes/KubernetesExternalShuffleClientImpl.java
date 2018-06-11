@@ -50,7 +50,7 @@ public class KubernetesExternalShuffleClientImpl
       TransportConf conf,
       SecretKeyHolder secretKeyHolder,
       boolean saslEnabled) {
-    super(conf, secretKeyHolder, saslEnabled);
+    super(conf, secretKeyHolder, saslEnabled, 5000);
   }
 
   @Override

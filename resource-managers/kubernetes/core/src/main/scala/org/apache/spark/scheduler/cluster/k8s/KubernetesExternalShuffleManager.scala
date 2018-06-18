@@ -116,7 +116,9 @@ private[spark] class KubernetesExternalShuffleManagerImpl(
         s"Found multiple matching pods: ${pod.getMetadata.getName}, " +
         s"${registeredPodName} on ${pod.getSpec.getNodeName}")
     } else {
-        shufflePodCache(pod.getSpec.getNodeName) = s"${pod.getMetadata.getName}.${pod.getSpec.getSubdomain}.${pod.getMetadata.getNamespace}.svc.cluster.local"
+        //shufflePodCache(pod.getSpec.getNodeName) = pod.getStatus.getPodIP
+        //shufflePodCache(pod.getSpec.getNodeName) = s"${pod.getMetadata.getName}.${pod.getSpec.getSubdomain}.${pod.getMetadata.getNamespace}.svc.cluster.local"
+        shufflePodCache(pod.getSpec.getNodeName) = pod.getSpec.getNodeName
     }
   }
 

@@ -116,7 +116,7 @@ private[spark] class KubernetesExternalShuffleManagerImpl(
         s"Found multiple matching pods: ${pod.getMetadata.getName}, " +
         s"${registeredPodName} on ${pod.getSpec.getNodeName}")
     } else {
-        shufflePodCache(pod.getSpec.getNodeName) = pod.getStatus.getPodIP
+        shufflePodCache(pod.getSpec.getNodeName) = s"${pod.getMetadata.getName}.${pod.getSpec.getSubdomain}.${pod.getNamespace}.svc.cluster.local"
     }
   }
 
@@ -128,13 +128,13 @@ private[spark] class KubernetesExternalShuffleManagerImpl(
   override def getShuffleServiceConfigurationForExecutor(executorPod: Pod)
       : Seq[(String, String)] = {
     val nodeName = executorPod.getSpec.getNodeName
-    val shufflePodIp = shufflePodCache.synchronized {
+    val shufflePodAddress = shufflePodCache.synchronized {
       shufflePodCache.get(nodeName).getOrElse(
           throw new SparkException(s"Unable to find shuffle pod on node $nodeName"))
     }
     // Inform the shuffle pod about this application so it can watch.
-    shuffleClient.registerDriverWithShuffleService(shufflePodIp, externalShufflePort)
-    Seq((SPARK_SHUFFLE_SERVICE_HOST.key, shufflePodIp))
+    shuffleClient.registerDriverWithShuffleService(shufflePodAddress, externalShufflePort)
+    Seq((SPARK_SHUFFLE_SERVICE_HOST.key, shufflePodAddress))
   }
 
   override def getExecutorShuffleDirVolumesWithMounts(): Seq[(Volume, VolumeMount)] = {

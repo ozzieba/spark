@@ -42,6 +42,7 @@ COPY bin /opt/spark/bin
 COPY sbin /opt/spark/sbin
 COPY conf /opt/spark/conf
 COPY ${img_path}/spark/entrypoint.sh /opt/
+COPY ${img_path}/spark/SplunkSink.jar /opt/spark/jars
 COPY examples /opt/spark/examples
 COPY data /opt/spark/data
 
